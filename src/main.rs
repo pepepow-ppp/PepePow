@@ -16,10 +16,11 @@ use tokio::{
 abigen!(
     IPOW,
     r#"[
-        function mine(uint256 nonce) external
+        function mintFee() external view returns (uint256)
         function challenge() external view returns (uint256)
         function difficulty() external view returns (uint256)
         function balanceOf(address account) external view returns (uint256)
+        function mine(uint256 nonce) external
     ]"#,
 );
 
@@ -67,7 +68,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
     let provider = Provider::<Http>::try_from("https://rpc.ankr.com/bsc")?;
-    let wallet = opt.private_key.parse::<LocalWallet>()?;
+    let wallet = opt.private_key.parse::<LocalWallet>()?.with_chain_id(56_u64);
     let provider = Arc::new(SignerMiddleware::new(provider, wallet));
     println!("🏅 Success init wallet");
 
@@ -76,12 +77,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let challenge: U256 = contract.challenge().call().await?;
     let difficulty: U256 = contract.difficulty().call().await?;
-
+    let mint_fee: U256 = contract.mint_fee().call().await?;
     let (result_tx, mut result_rx) = mpsc::channel::<U256>(opt.worker_count); // Adjust buffer size as needed
     let hash_counter = Arc::new(AtomicUsize::new(0));
 
     println!("🏆 Challenge: {}", challenge);
     println!("⛰️  Difficulty: {}", difficulty);
+    println!("🛠️  MintFee: {}", mint_fee);
+
 
     let difficulty = U256::from(1) << (U256::from(256) - difficulty);
     println!("🎯 Target: {}", difficulty);
@@ -130,7 +133,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("✅ Find the nonce: {}", nonce);
                     let contract = contract.clone();
                     tokio::spawn(async move{
-                        let result = contract.mine(nonce).send().await.unwrap().await.unwrap();
+                        let result = contract.mine(nonce).value(mint_fee).send().await.unwrap().await.unwrap();
                         match result {
                             Some(tx) => {
                                 println!("🙆 Successfully mined a block: {:?}", tx.transaction_hash)
