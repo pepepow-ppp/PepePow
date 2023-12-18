@@ -27,6 +27,6 @@ This Rust project is a fully-functional tool for participating in Ethereum's Pep
    - Adjust the number of mining workers as desired.
 
 2. **Running the Tool**:
-   - Start the tool by running `./target/release/pow-erc20 --private-key YOUR_PRIVATE_KEY --contract-address CONTRACT_ADDRESS --worker-count COUNT` in your terminal.
+   - Start the tool by running `./target/release/pepepow --private-key YOUR_PRIVATE_KEY --contract-address CONTRACT_ADDRESS --worker-count COUNT` in your terminal.
    - Optional flags or environment variables can be used for specific configurations.
 
