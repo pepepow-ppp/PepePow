@@ -1,0 +1,2 @@
+# PepePow
+Pepepow Mining Tool 🚀
